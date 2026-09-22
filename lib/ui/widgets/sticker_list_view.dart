@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 
 import '../../data/_data.dart';
 import '../../ui_kit/_ui_kit.dart';
@@ -24,7 +23,11 @@ class StickerListView extends StatelessWidget {
               isReversed ? stickers.reversed.toList()[index] : stickers[index];
           return GestureDetector(
             onTap: () {
-              Get.to(() => StickerDetail(sticker: sticker));
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => StickerDetail(stickerId: sticker.id),
+                ),
+              );
             },
             child: Container(
               width: 160,

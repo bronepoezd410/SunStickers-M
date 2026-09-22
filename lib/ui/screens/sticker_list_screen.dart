@@ -1,80 +1,88 @@
 import 'package:badges/badges.dart';
 import 'package:flutter/material.dart' hide Badge;
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:get/get.dart';
 
 import '../../states/_states.dart';
 import '../../ui_kit/_ui_kit.dart';
 import '../_ui.dart';
 
 class StickerList extends StatelessWidget {
-  StickerList({super.key});
-
-  final StickerState state = Get.find<StickerState>();
+  const StickerList({super.key});
 
   @override
-  Widget build(BuildContext context) => Scaffold(
-        appBar: _appBar(context),
-        body: Padding(
-          padding: const EdgeInsets.all(20),
-          child: SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  "Morning, Sunny",
-                  style: Theme.of(context).textTheme.headlineSmall,
-                ),
-                Text(
-                  "What sticker do you want\nto buy today",
-                  style: Theme.of(context).textTheme.displayLarge,
-                ),
-                _searchBar(),
-                Text(
-                  "Available for you",
-                  style: Theme.of(context).textTheme.displaySmall,
-                ),
-                _categories(context),
-                Obx(() => StickerListView(stickers: state.stickersByCategory.toList())),
-                Padding(
-                  padding: const EdgeInsets.only(top: 25, bottom: 5),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        "Best stickers of the week",
-                        style: Theme.of(context).textTheme.displaySmall,
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: _appBar(context),
+      body: Padding(
+        padding: const EdgeInsets.all(20),
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                "Morning, Sunny",
+                style: Theme.of(context).textTheme.headlineSmall,
+              ),
+              Text(
+                "What sticker do you want\nto buy today",
+                style: Theme.of(context).textTheme.displayLarge,
+              ),
+              _searchBar(),
+              Text(
+                "Available for you",
+                style: Theme.of(context).textTheme.displaySmall,
+              ),
+              _categories(context),
+              BlocBuilder<StickerCubit, StickerState>(
+                buildWhen: (p, c) => p.stickersByCategory != c.stickersByCategory,
+                builder: (context, state) {
+                  return StickerListView(stickers: state.stickersByCategory);
+                },
+              ),
+              Padding(
+                padding: const EdgeInsets.only(top: 25, bottom: 5),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      "Best stickers of the week",
+                      style: Theme.of(context).textTheme.displaySmall,
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.only(right: 20),
+                      child: Text(
+                        "See all",
+                        style: Theme.of(context)
+                            .textTheme
+                            .headlineMedium
+                            ?.copyWith(color: AppColor.accent),
                       ),
-                      Padding(
-                        padding: const EdgeInsets.only(right: 20),
-                        child: Text(
-                          "See all",
-                          style: Theme.of(context)
-                              .textTheme
-                              .headlineMedium
-                              ?.copyWith(color: AppColor.accent),
-                        ),
-                      ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
-                Obx(
-                  () => StickerListView(
-                    stickers: state.stickersByCategory.toList(),
+              ),
+              BlocBuilder<StickerCubit, StickerState>(
+                buildWhen: (p, c) => p.stickersByCategory != c.stickersByCategory,
+                builder: (context, state) {
+                  return StickerListView(
+                    stickers: state.stickersByCategory,
                     isReversed: true,
-                  ),
-                ),
-              ],
-            ),
+                  );
+                },
+              ),
+            ],
           ),
         ),
-      );
+      ),
+    );
+  }
 
   PreferredSizeWidget _appBar(BuildContext context) {
     return AppBar(
       leading: IconButton(
         icon: const FaIcon(FontAwesomeIcons.dice),
-        onPressed: state.toggleTheme,
+        onPressed: () => context.read<StickerCubit>().toggleTheme(),
       ),
       title: Row(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -120,34 +128,37 @@ class StickerList extends StatelessWidget {
       padding: const EdgeInsets.only(top: 8.0),
       child: SizedBox(
         height: 40,
-        child: Obx(
-          () => ListView.separated(
-            scrollDirection: Axis.horizontal,
-            itemBuilder: (_, index) {
-              final category = state.categories[index];
-              return GestureDetector(
-                onTap: () => state.onCategoryTap(category),
-                child: Container(
-                  width: 100,
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    color: category.isSelected ? AppColor.accent : Colors.transparent,
-                    borderRadius: const BorderRadius.all(
-                      Radius.circular(15),
+        child: BlocBuilder<StickerCubit, StickerState>(
+          buildWhen: (p, c) => p.categories != c.categories,
+          builder: (context, state) {
+            return ListView.separated(
+              scrollDirection: Axis.horizontal,
+              itemBuilder: (_, index) {
+                final category = state.categories[index];
+                return GestureDetector(
+                  onTap: () => context.read<StickerCubit>().onCategoryTap(category),
+                  child: Container(
+                    width: 100,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: category.isSelected ? AppColor.accent : Colors.transparent,
+                      borderRadius: const BorderRadius.all(
+                        Radius.circular(15),
+                      ),
+                    ),
+                    child: Text(
+                      category.type.name.firstCapital,
+                      style: Theme.of(context).textTheme.headlineMedium,
                     ),
                   ),
-                  child: Text(
-                    category.type.name.firstCapital,
-                    style: Theme.of(context).textTheme.headlineMedium,
-                  ),
-                ),
-              );
-            },
-            separatorBuilder: (_, __) => Container(
-              width: 15,
-            ),
-            itemCount: state.categories.length,
-          ),
+                );
+              },
+              separatorBuilder: (_, __) => Container(
+                width: 15,
+              ),
+              itemCount: state.categories.length,
+            );
+          },
         ),
       ),
     );

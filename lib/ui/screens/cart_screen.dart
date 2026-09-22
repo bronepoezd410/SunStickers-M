@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:get/get.dart';
 
 import '../../data/_data.dart';
 import '../../states/_states.dart';
@@ -8,25 +8,25 @@ import '../../ui_kit/_ui_kit.dart';
 import '../_ui.dart';
 
 class CartScreen extends StatelessWidget {
-  CartScreen({super.key});
-
-  final StickerState state = Get.find<StickerState>();
+  const CartScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Obx(() {
-      final cartItems = state.cart.toList();
-      return Scaffold(
-        appBar: _appBar(context),
-        body: EmptyWrapper(
-          title: "Empty cart",
-          isEmpty: cartItems.isEmpty,
-          child: _cartListView(context, cartItems),
-        ),
-        bottomNavigationBar:
-            cartItems.isEmpty ? const SizedBox.shrink() : _bottomAppBar(context),
-      );
-    });
+    return BlocBuilder<StickerCubit, StickerState>(
+      builder: (context, state) {
+        final cartItems = state.cart;
+        return Scaffold(
+          appBar: _appBar(context),
+          body: EmptyWrapper(
+            title: "Empty cart",
+            isEmpty: cartItems.isEmpty,
+            child: _cartListView(context, state, cartItems),
+          ),
+          bottomNavigationBar:
+              cartItems.isEmpty ? const SizedBox.shrink() : _bottomAppBar(context, state),
+        );
+      },
+    );
   }
 
   PreferredSizeWidget _appBar(BuildContext context) {
@@ -38,7 +38,11 @@ class CartScreen extends StatelessWidget {
     );
   }
 
-  Widget _cartListView(BuildContext context, List<Sticker> cartItems) {
+  Widget _cartListView(
+    BuildContext context,
+    StickerState state,
+    List<Sticker> cartItems,
+  ) {
     return ListView.separated(
       padding: const EdgeInsets.all(30),
       itemCount: cartItems.length,
@@ -46,7 +50,8 @@ class CartScreen extends StatelessWidget {
         final sticker = cartItems[index];
         return Dismissible(
           direction: DismissDirection.endToStart,
-          onDismissed: (_) => state.onRemoveFromCartTap(sticker),
+          onDismissed: (_) =>
+              context.read<StickerCubit>().onRemoveFromCartTap(sticker.id),
           key: ValueKey('cart_${sticker.id}'),
           background: Row(
             children: [
@@ -96,8 +101,10 @@ class CartScreen extends StatelessWidget {
                 Column(
                   children: [
                     CounterButton(
-                      onIncrementTap: () => state.onIncreaseQuantityTap(sticker),
-                      onDecrementTap: () => state.onDecreaseQuantityTap(sticker),
+                      onIncrementTap: () => context
+                          .read<StickerCubit>().onIncreaseQuantityTap(sticker.id),
+                      onDecrementTap: () => context
+                          .read<StickerCubit>().onDecreaseQuantityTap(sticker.id),
                       size: const Size(24, 24),
                       padding: 0,
                       label: Text(
@@ -122,7 +129,7 @@ class CartScreen extends StatelessWidget {
     );
   }
 
-  Widget _bottomAppBar(BuildContext context) {
+  Widget _bottomAppBar(BuildContext context, StickerState state) {
     return ClipRRect(
       borderRadius: const BorderRadius.only(
         topLeft: Radius.circular(30),
@@ -202,7 +209,8 @@ class CartScreen extends StatelessWidget {
                       child: Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 30),
                         child: ElevatedButton(
-                          onPressed: state.onCheckOutTap,
+                          onPressed: () =>
+                              context.read<StickerCubit>().onCheckOutTap(),
                           child: const Text("Checkout"),
                         ),
                       ),

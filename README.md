@@ -1,15 +1,122 @@
-## Ветка :star: state_structure_stateless
+## Ветка :star: state_structure_copy_with
 
-Для упрощения перехода от логики на основе setState ([Учебник](https://yulmosk.github.io/SunStickers/tutorials/Stickers.pdf) Глава 8) к использованию  библиотек, в ветке state_structure_stateless виджеты экранов преобразованы со StatefulWidget на StatelessWidget.
-В файле sticker_state.dart уже сформирован список переменных, реализованы методы и вспомогательные методы на основе которых можно реализовать логику приложения, не задумываясь о структуре сущностей и логике методов.
-Задумка репозитория это реализация бизнес логики на основе одного и того же списка переменных, на основе одних и  тех же методов, но разными библиотеками.
-Список переменных и реализованные методы позволяют не отвлекаться от сравнения синтанкисов и подходов библиотек управления состоянием.
+В ветке state_structure_stateless как и в ветке state_structure_stateless виджеты экранов преобразованы со StatefulWidget на StatelessWidget.
+В зависимости добавлена библиотека equatable.
 
-В завершении файла зафиксированы 14 шагов логики, которые надо реализовывать.
+```yaml
+dependencies:
+flutter:
+sdk: flutter
+#...
+equatable: ^2.0.5
+```
+Для сущностей Sticker и StickerCategory реализованы методы copyWith
+
+```dart
+import 'package:equatable/equatable.dart';
+
+enum StickerType { all, toy, fauna, plant, berry, fruit, other }
+
+class Sticker extends Equatable{
+  final int id;
+  final String image;
+  final String name;
+  final double price;
+  final int quantity;
+  final bool favorite;
+  final String description;
+  final double score;
+  final StickerType type;
+  final int voter;
+  final bool cart;
+
+  Sticker({
+    required this.id,
+    required this.image,
+    required this.name,
+    required this.price,
+    required this.quantity,
+    required this.favorite,
+    required this.description,
+    required this.score,
+    required this.type,
+    required this.voter,
+    required this.cart,
+  });
+
+  List<Object?> get props => [id, image, name, price, quantity, favorite, description, score, type, voter, cart];
+  @override
+  int get hashCode => id.hashCode^image.hashCode^name.hashCode^price.hashCode^quantity.hashCode^favorite.hashCode^description.hashCode^score.hashCode^type.hashCode^voter.hashCode^cart.hashCode;
+
+  Sticker copyWith({
+    int? id,
+    String? image,
+    String? name,
+    double? price,
+    int? quantity,
+    bool? favorite,
+    String? description,
+    double? score,
+    StickerType? type,
+    int? voter,
+    bool? cart,
+  }) {
+    return Sticker(
+      id: id ?? this.id,
+      image: image ?? this.image,
+      name: name ?? this.name,
+      price: price ?? this.price,
+      quantity: quantity ?? this.quantity,
+      favorite: favorite ?? this.favorite,
+      description: description ?? this.description,
+      score: score ?? this.score,
+      type: type ?? this.type,
+      voter: voter ?? this.voter,
+      cart: cart ?? this.cart,
+    );
+  }
+}
+```
+
+```dart
+import 'package:equatable/equatable.dart';
+
+import '_models.dart';
+
+class StickerCategory extends Equatable {
+  final StickerType type;
+  final bool isSelected;
+
+  StickerCategory({required this.type, required this.isSelected});
+
+  @override
+  List<Object?> get props => [type, isSelected];
+  StickerCategory copyWith({StickerType? type, bool? isSelected}) {
+    return StickerCategory(
+      type: type ?? this.type,
+      isSelected: isSelected ?? this.isSelected,
+    );
+  }
+
+}
+```
+
+В файле sticker_state.dart как и в ветке state_structure_stateless тоже сформирован список переменных, реализованы методы и вспомогательные методы на основе которых можно реализовать логику приложения, не задумываясь о структуре сущностей и логике методов.
+Реализация методов в ветке state_structure_copy_with отличается от реализации в ветке state_structure_stateless использованием copyWith для сущностей.
+Библиотеки **BLoC**, **Cubit**, **Provider**, **Riverpod**, **Redux** запускают механизмы обновления данных, только если данные меняются.
+Для типа данных class, который имеет ссылочный тип, изменение свойств экземпляра класса не меняет ссылку на объект.
+А значит с точки зрения Dart и с точки зрения библиотек управления состоянием при изменении свойств данные не меняются.
+Чтобы библиотеки управления состояния заработали, изменеие свойств сущностей будем реализовывать с использованием метода copyWith.
+Метод copyWith создает новый экземпляр (с новой ссылкой) класса с измененным свойством.
 
 Листинг файла lib >> states >> sticker_state.dart
 
 ```dart
+import 'package:flutter/material.dart';
+
+import '../data/_data.dart';
+import '../ui/_ui.dart';
+
 class StickerState {
   StickerState._();
   static final _instance = StickerState._();
@@ -25,13 +132,14 @@ class StickerState {
 
   //Действия
   Future<void> onCategoryTap(StickerCategory category) async {
-    categories.map((e) {
+    categories = categories.map((e) {
       if (e.type == category.type) {
-        e.isSelected = true;
+        return e.copyWith(isSelected: true);
       } else {
-        e.isSelected = false;
+        return e.copyWith(isSelected: false);
       }
     }).toList();
+
     if (category.type == StickerType.all) {
       stickersByCategory = stickers;
     } else {
@@ -39,41 +147,87 @@ class StickerState {
     }
   }
 
-  Future<void> onIncreaseQuantityTap(Sticker sticker) async {
-    sticker.quantity++;
+  Future<void> onIncreaseQuantityTap(int stickerId) async {
+    stickers = stickers.map((e) {
+      if (e.id == stickerId) {
+        return e.copyWith(quantity: e.quantity + 1);
+      } else {
+        return e;
+      }
+    }).toList();
   }
 
-  Future<void> onDecreaseQuantityTap(Sticker sticker) async {
-    if (sticker.quantity == 1) return;
-    sticker.quantity--;
+  Future<void> onDecreaseQuantityTap(int stickerId) async {
+    stickers = stickers.map((e) {
+      if (e.id == stickerId) {
+        return e.quantity == 1 ? e : e.copyWith(quantity: e.quantity - 1);
+      } else {
+        return e;
+      }
+    }).toList();
   }
 
-  Future<void> onAddToCartTap(Sticker sticker) async {
-    sticker.cart = true;
+  Future<void> onAddToCartTap(int stickerId) async {
+    stickers = stickers.map((e) {
+      if (e.id == stickerId) {
+        return e.copyWith(cart: true);
+      } else {
+        return e;
+      }
+    }).toList();
     cart = stickers.where((e) => e.cart).toList();
   }
 
-  Future<void> onRemoveFromCartTap(Sticker sticker) async {
-    sticker.cart = false;
-    sticker.quantity = 1;
+  Future<void> onRemoveFromCartTap(int stickerId) async {
+    stickers = stickers.map((e) {
+      if (e.id == stickerId) {
+        return e.copyWith(cart: false, quantity: 1);
+      } else {
+        return e;
+      }
+    }).toList();
     cart = stickers.where((e) => e.cart).toList();
   }
 
   Future<void> onCheckOutTap() async {
-    for (var e in cart) {
-      e.cart = false;
-      e.quantity = 1;
+    Set<int> cartIds = <int>{};
+    for (var item in cart) {
+      cartIds.add(item.id);
     }
+    stickers = stickers.map((e) {
+      if (cartIds.contains(e.id)) {
+        return e.copyWith(cart: false, quantity: 1);
+      } else {
+        return e;
+      }
+    }).toList();
     cart = stickers.where((e) => e.cart).toList();
   }
 
-  Future<void> onAddRemoveFavoriteTap(Sticker sticker) async {
-    sticker.favorite = !sticker.favorite;
+  Future<void> onAddRemoveFavoriteTap(int stickerId) async {
+    stickers = stickers.map((e) {
+      if (e.id == stickerId) {
+        return e.copyWith(favorite: !e.favorite);
+      } else {
+        return e;
+      }
+    }).toList();
     favorite = stickers.where((e) => e.favorite).toList();
   }
 
   void toggleTheme() {
     light = !light;
+  }
+
+  //List<Sticker> get cart => stickers.where((e) => e.cart).toList();
+  //List<Sticker> get favorite => stickers.where((e) => e.favorite).toList();
+
+  int getIndex(int stickerId) {
+    int index = stickers.indexWhere((e) => e.id == stickerId);
+    return index;
+  }
+  Sticker getStickerById(int stickerId) {
+    return stickers[getIndex(stickerId)];
   }
 
   //Вспомогательные  методы
@@ -88,6 +242,7 @@ class StickerState {
     }
     return amount;
   }
+
 
 //BLoC, Cubit, GetX, MobX, Provider, Riverpod, Redux
 
@@ -111,4 +266,4 @@ class StickerState {
 }
 ```
 
-На основе этой ветки удобно реализовать бизнес логику приложения на **GetX** и **MobX**
+На основе этой ветки удобно реализовать бизнес логику приложения на **BLoC**, **Cubit**, **Provider**, **Riverpod**, **Redux**

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../states/_states.dart';
 import '../../ui_kit/_ui_kit.dart';
@@ -9,7 +9,6 @@ class ProfileScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final state = Get.find<StickerState>();
     return Scaffold(
       body: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -23,15 +22,19 @@ class ProfileScreen extends StatelessWidget {
             style: Theme.of(context).textTheme.displayLarge,
           ),
           const SizedBox(height: 20),
-          Obx(
-            () => SwitchListTile(
-              title: Text(
-                state.light.value ? 'Light theme' : 'Dark theme',
-                style: Theme.of(context).textTheme.headlineMedium,
-              ),
-              value: state.light.value,
-              onChanged: (_) => state.toggleTheme(),
-            ),
+          BlocBuilder<StickerCubit, StickerState>(
+            buildWhen: (p, c) => p.light != c.light,
+            builder: (context, state) {
+              return SwitchListTile(
+                title: Text(
+                  state.light ? 'Light theme' : 'Dark theme',
+                  style: Theme.of(context).textTheme.headlineMedium,
+                ),
+                value: state.light,
+                onChanged: (_) =>
+                    context.read<StickerCubit>().toggleTheme(),
+              );
+            },
           ),
         ],
       ),

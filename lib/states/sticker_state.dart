@@ -1,92 +1,41 @@
-import 'package:flutter/material.dart';
-import 'package:get/get.dart';
+import 'package:equatable/equatable.dart';
 
 import '../data/_data.dart';
 
-class StickerState extends GetxController {
-  // Переменные
-  final categories = <StickerCategory>[].obs;
-  final stickers = <Sticker>[].obs;
-  final stickersByCategory = <Sticker>[].obs;
-  final cart = <Sticker>[].obs;
-  final favorite = <Sticker>[].obs;
-  final light = true.obs;
+class StickerState extends Equatable {
+  const StickerState({
+    required this.categories,
+    required this.stickers,
+    required this.stickersByCategory,
+    required this.cart,
+    required this.favorite,
+    required this.light,
+  });
+
+  factory StickerState.initial() {
+    return StickerState(
+      categories: List<StickerCategory>.from(AppData.categories),
+      stickers: List<Sticker>.from(AppData.stickers),
+      stickersByCategory: List<Sticker>.from(AppData.stickers),
+      cart: const <Sticker>[],
+      favorite: const <Sticker>[],
+      light: true,
+    );
+  }
 
   static const double taxes = 5.0;
 
-  @override
-  void onInit() {
-    super.onInit();
-    categories.assignAll(AppData.categories);
-    stickers.assignAll(AppData.stickers);
-    stickersByCategory.assignAll(AppData.stickers);
+  final List<StickerCategory> categories;
+  final List<Sticker> stickers;
+  final List<Sticker> stickersByCategory;
+  final List<Sticker> cart;
+  final List<Sticker> favorite;
+  final bool light;
+
+  Sticker getStickerById(int stickerId) {
+    return stickers.firstWhere((e) => e.id == stickerId);
   }
 
-  // Действия
-  Future<void> onCategoryTap(StickerCategory category) async {
-    for (final e in categories) {
-      e.isSelected = e.type == category.type;
-    }
-    if (category.type == StickerType.all) {
-      stickersByCategory.assignAll(stickers);
-    } else {
-      stickersByCategory.assignAll(
-        stickers.where((e) => e.type == category.type).toList(),
-      );
-    }
-    categories.refresh();
-  }
-
-  Future<void> onIncreaseQuantityTap(Sticker sticker) async {
-    sticker.quantity++;
-    stickers.refresh();
-    stickersByCategory.refresh();
-    cart.refresh();
-  }
-
-  Future<void> onDecreaseQuantityTap(Sticker sticker) async {
-    if (sticker.quantity == 1) return;
-    sticker.quantity--;
-    stickers.refresh();
-    stickersByCategory.refresh();
-    cart.refresh();
-  }
-
-  Future<void> onAddToCartTap(Sticker sticker) async {
-    sticker.cart = true;
-    cart.assignAll(stickers.where((e) => e.cart).toList());
-    stickers.refresh();
-  }
-
-  Future<void> onRemoveFromCartTap(Sticker sticker) async {
-    sticker.cart = false;
-    sticker.quantity = 1;
-    cart.assignAll(stickers.where((e) => e.cart).toList());
-    stickers.refresh();
-  }
-
-  Future<void> onCheckOutTap() async {
-    for (final e in cart) {
-      e.cart = false;
-      e.quantity = 1;
-    }
-    cart.assignAll(stickers.where((e) => e.cart).toList());
-    stickers.refresh();
-  }
-
-  Future<void> onAddRemoveFavoriteTap(Sticker sticker) async {
-    sticker.favorite = !sticker.favorite;
-    favorite.assignAll(stickers.where((e) => e.favorite).toList());
-    stickers.refresh();
-    stickersByCategory.refresh();
-  }
-
-  void toggleTheme() {
-    light.value = !light.value;
-    Get.changeThemeMode(light.value ? ThemeMode.light : ThemeMode.dark);
-  }
-
-  // Вспомогательные методы
   String stickerPrice(Sticker sticker) {
     return (sticker.quantity * sticker.price).toStringAsFixed(0);
   }
@@ -100,6 +49,34 @@ class StickerState extends GetxController {
   }
 
   double get total => subtotal + taxes;
+
+  StickerState copyWith({
+    List<StickerCategory>? categories,
+    List<Sticker>? stickers,
+    List<Sticker>? stickersByCategory,
+    List<Sticker>? cart,
+    List<Sticker>? favorite,
+    bool? light,
+  }) {
+    return StickerState(
+      categories: categories ?? this.categories,
+      stickers: stickers ?? this.stickers,
+      stickersByCategory: stickersByCategory ?? this.stickersByCategory,
+      cart: cart ?? this.cart,
+      favorite: favorite ?? this.favorite,
+      light: light ?? this.light,
+    );
+  }
+
+  @override
+  List<Object?> get props => [
+        categories,
+        stickers,
+        stickersByCategory,
+        cart,
+        favorite,
+        light,
+      ];
 
   // 14 шагов логики
   // 1.  Подсветка выбранной категории
