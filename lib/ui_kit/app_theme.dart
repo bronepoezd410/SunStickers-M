@@ -53,7 +53,9 @@ class AppTheme {
       selectedItemColor: AppColor.accent,
     ),
     iconTheme: const IconThemeData(color: Colors.black45),
-    bottomAppBarTheme: const BottomAppBarTheme(color: Colors.white),
+    bottomAppBarTheme: const BottomAppBarThemeData(
+  color: Colors.white,
+),
   );
 
   static ThemeData darkTheme = ThemeData(
@@ -105,8 +107,8 @@ class AppTheme {
       unselectedItemColor: Colors.white70,
     ),
     iconTheme: const IconThemeData(color: Colors.white),
-    bottomAppBarTheme: const BottomAppBarTheme(
-      color: AppColor.dark,
-    ),
+    bottomAppBarTheme: const BottomAppBarThemeData(
+  color: Colors.white,
+),
   );
 }
