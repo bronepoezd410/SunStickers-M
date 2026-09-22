@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:provider/provider.dart';
 
 import '../../data/_data.dart';
 import '../../states/_states.dart';
@@ -13,14 +13,13 @@ class FavoriteScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: _appBar(context),
-      body: BlocBuilder<StickerCubit, StickerState>(
-        buildWhen: (p, c) => p.favorite != c.favorite,
-        builder: (context, state) {
+      body: Consumer<StickerProvider>(
+        builder: (context, provider, _) {
           return EmptyWrapper(
             type: EmptyWrapperType.favorite,
             title: "Empty favorite",
-            isEmpty: state.favorite.isEmpty,
-            child: _favoriteListView(context, state.favorite),
+            isEmpty: provider.favorite.isEmpty,
+            child: _favoriteListView(context, provider),
           );
         },
       ),
@@ -36,12 +35,12 @@ class FavoriteScreen extends StatelessWidget {
     );
   }
 
-  Widget _favoriteListView(BuildContext context, List<Sticker> favoriteItems) {
+  Widget _favoriteListView(BuildContext context, StickerProvider provider) {
     return ListView.separated(
       padding: const EdgeInsets.all(30),
-      itemCount: favoriteItems.length,
+      itemCount: provider.favorite.length,
       itemBuilder: (_, index) {
-        final Sticker sticker = favoriteItems[index];
+        final Sticker sticker = provider.favorite[index];
         return Card(
           color: Theme.of(context).brightness == Brightness.light
               ? Colors.white
@@ -62,8 +61,7 @@ class FavoriteScreen extends StatelessWidget {
             ),
             trailing: IconButton(
               icon: const Icon(AppIcon.heart, color: Colors.redAccent),
-              onPressed: () =>
-                  context.read<StickerCubit>().onAddRemoveFavoriteTap(sticker.id),
+              onPressed: () => provider.onAddRemoveFavoriteTap(sticker.id),
             ),
           ),
         );

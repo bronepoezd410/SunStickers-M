@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:provider/provider.dart';
 
 import '../../data/_data.dart';
 import '../../states/_states.dart';
@@ -15,22 +15,22 @@ class StickerDetail extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<StickerCubit, StickerState>(
-      builder: (context, state) {
-        final sticker = state.getStickerById(stickerId);
+    return Consumer<StickerProvider>(
+      builder: (context, provider, _) {
+        final sticker = provider.getStickerById(stickerId);
         return Scaffold(
           appBar: _appBar(context),
           body: Center(child: Image.asset(sticker.image, scale: 2)),
           floatingActionButton: FloatingActionButton(
             elevation: 0.0,
             backgroundColor: AppColor.accent,
-            onPressed: () => context.read<StickerCubit>().onAddRemoveFavoriteTap(stickerId),
+            onPressed: () => provider.onAddRemoveFavoriteTap(stickerId),
             child: sticker.favorite
                 ? const Icon(AppIcon.heart)
                 : const Icon(AppIcon.outlinedHeart),
           ),
           floatingActionButtonLocation: FloatingActionButtonLocation.endDocked,
-          bottomNavigationBar: _bottomAppBar(context, sticker),
+          bottomNavigationBar: _bottomAppBar(context, provider, sticker),
         );
       },
     );
@@ -54,7 +54,11 @@ class StickerDetail extends StatelessWidget {
     );
   }
 
-  Widget _bottomAppBar(BuildContext context, Sticker sticker) {
+  Widget _bottomAppBar(
+    BuildContext context,
+    StickerProvider provider,
+    Sticker sticker,
+  ) {
     return ClipRRect(
       borderRadius: const BorderRadius.only(
         topLeft: Radius.circular(30),
@@ -114,10 +118,8 @@ class StickerDetail extends StatelessWidget {
                               ?.copyWith(color: AppColor.accent),
                         ),
                         CounterButton(
-                          onIncrementTap: () => context
-                              .read<StickerCubit>().onIncreaseQuantityTap(stickerId),
-                          onDecrementTap: () => context
-                              .read<StickerCubit>().onDecreaseQuantityTap(stickerId),
+                          onIncrementTap: () => provider.onIncreaseQuantityTap(stickerId),
+                          onDecrementTap: () => provider.onDecreaseQuantityTap(stickerId),
                           label: Text(
                             sticker.quantity.toString(),
                             style: Theme.of(context).textTheme.displayLarge,
@@ -142,8 +144,7 @@ class StickerDetail extends StatelessWidget {
                       child: Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 30),
                         child: ElevatedButton(
-                          onPressed: () =>
-                              context.read<StickerCubit>().onAddToCartTap(stickerId),
+                          onPressed: () => provider.onAddToCartTap(stickerId),
                           child: const Text("Add to cart"),
                         ),
                       ),
