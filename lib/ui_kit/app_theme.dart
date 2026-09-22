@@ -42,7 +42,7 @@ class AppTheme {
     ),
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ButtonStyle(
-        backgroundColor: MaterialStateProperty.all<Color>(
+        backgroundColor: WidgetStateProperty.all<Color>(
           AppColor.accent,
         ),
       ),
@@ -53,7 +53,7 @@ class AppTheme {
       selectedItemColor: AppColor.accent,
     ),
     iconTheme: const IconThemeData(color: Colors.black45),
-    bottomAppBarTheme: const BottomAppBarTheme(color: Colors.white),
+    bottomAppBarTheme: const BottomAppBarThemeData(color: Colors.white),
   );
 
   static ThemeData darkTheme = ThemeData(
@@ -93,7 +93,7 @@ class AppTheme {
     ),
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ButtonStyle(
-        backgroundColor: MaterialStateProperty.all<Color>(
+        backgroundColor: WidgetStateProperty.all<Color>(
           AppColor.accent,
         ),
       ),
@@ -105,7 +105,7 @@ class AppTheme {
       unselectedItemColor: Colors.white70,
     ),
     iconTheme: const IconThemeData(color: Colors.white),
-    bottomAppBarTheme: const BottomAppBarTheme(
+    bottomAppBarTheme: const BottomAppBarThemeData(
       color: AppColor.dark,
     ),
   );
