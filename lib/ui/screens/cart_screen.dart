@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_redux/flutter_redux.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 import '../../data/_data.dart';
@@ -12,7 +12,8 @@ class CartScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<StickerCubit, StickerState>(
+    return StoreConnector<StickerState, StickerState>(
+      converter: (store) => store.state,
       builder: (context, state) {
         final cartItems = state.cart;
         return Scaffold(
@@ -50,8 +51,8 @@ class CartScreen extends StatelessWidget {
         final sticker = cartItems[index];
         return Dismissible(
           direction: DismissDirection.endToStart,
-          onDismissed: (_) =>
-              context.read<StickerCubit>().onRemoveFromCartTap(sticker.id),
+          onDismissed: (_) => StoreProvider.of<StickerState>(context)
+              .dispatch(RemovedFromCartAction(sticker.id)),
           key: ValueKey('cart_${sticker.id}'),
           background: Row(
             children: [
@@ -101,10 +102,10 @@ class CartScreen extends StatelessWidget {
                 Column(
                   children: [
                     CounterButton(
-                      onIncrementTap: () => context
-                          .read<StickerCubit>().onIncreaseQuantityTap(sticker.id),
-                      onDecrementTap: () => context
-                          .read<StickerCubit>().onDecreaseQuantityTap(sticker.id),
+                      onIncrementTap: () => StoreProvider.of<StickerState>(context)
+                          .dispatch(QuantityIncreasedAction(sticker.id)),
+                      onDecrementTap: () => StoreProvider.of<StickerState>(context)
+                          .dispatch(QuantityDecreasedAction(sticker.id)),
                       size: const Size(24, 24),
                       padding: 0,
                       label: Text(
@@ -209,8 +210,8 @@ class CartScreen extends StatelessWidget {
                       child: Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 30),
                         child: ElevatedButton(
-                          onPressed: () =>
-                              context.read<StickerCubit>().onCheckOutTap(),
+                          onPressed: () => StoreProvider.of<StickerState>(context)
+                              .dispatch(const CheckoutTappedAction()),
                           child: const Text("Checkout"),
                         ),
                       ),

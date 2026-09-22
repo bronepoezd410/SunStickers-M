@@ -1,8 +1,9 @@
 import 'package:badges/badges.dart';
 import 'package:flutter/material.dart' hide Badge;
-import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_redux/flutter_redux.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
+import '../../data/_data.dart';
 import '../../states/_states.dart';
 import '../../ui_kit/_ui_kit.dart';
 import '../_ui.dart';
@@ -34,10 +35,11 @@ class StickerList extends StatelessWidget {
                 style: Theme.of(context).textTheme.displaySmall,
               ),
               _categories(context),
-              BlocBuilder<StickerCubit, StickerState>(
-                buildWhen: (p, c) => p.stickersByCategory != c.stickersByCategory,
-                builder: (context, state) {
-                  return StickerListView(stickers: state.stickersByCategory);
+              StoreConnector<StickerState, List<Sticker>>(
+                distinct: true,
+                converter: (store) => store.state.stickersByCategory,
+                builder: (context, stickers) {
+                  return StickerListView(stickers: stickers);
                 },
               ),
               Padding(
@@ -62,11 +64,12 @@ class StickerList extends StatelessWidget {
                   ],
                 ),
               ),
-              BlocBuilder<StickerCubit, StickerState>(
-                buildWhen: (p, c) => p.stickersByCategory != c.stickersByCategory,
-                builder: (context, state) {
+              StoreConnector<StickerState, List<Sticker>>(
+                distinct: true,
+                converter: (store) => store.state.stickersByCategory,
+                builder: (context, stickers) {
                   return StickerListView(
-                    stickers: state.stickersByCategory,
+                    stickers: stickers,
                     isReversed: true,
                   );
                 },
@@ -82,7 +85,8 @@ class StickerList extends StatelessWidget {
     return AppBar(
       leading: IconButton(
         icon: const FaIcon(FontAwesomeIcons.dice),
-        onPressed: () => context.read<StickerCubit>().toggleTheme(),
+        onPressed: () => StoreProvider.of<StickerState>(context)
+            .dispatch(const ThemeToggledAction()),
       ),
       title: Row(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -128,15 +132,17 @@ class StickerList extends StatelessWidget {
       padding: const EdgeInsets.only(top: 8.0),
       child: SizedBox(
         height: 40,
-        child: BlocBuilder<StickerCubit, StickerState>(
-          buildWhen: (p, c) => p.categories != c.categories,
-          builder: (context, state) {
+        child: StoreConnector<StickerState, List<StickerCategory>>(
+          distinct: true,
+          converter: (store) => store.state.categories,
+          builder: (context, categories) {
             return ListView.separated(
               scrollDirection: Axis.horizontal,
               itemBuilder: (_, index) {
-                final category = state.categories[index];
+                final category = categories[index];
                 return GestureDetector(
-                  onTap: () => context.read<StickerCubit>().onCategoryTap(category),
+                  onTap: () => StoreProvider.of<StickerState>(context)
+                      .dispatch(CategoryTappedAction(category)),
                   child: Container(
                     width: 100,
                     alignment: Alignment.center,
@@ -156,7 +162,7 @@ class StickerList extends StatelessWidget {
               separatorBuilder: (_, __) => Container(
                 width: 15,
               ),
-              itemCount: state.categories.length,
+              itemCount: categories.length,
             );
           },
         ),

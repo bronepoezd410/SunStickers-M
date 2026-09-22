@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_redux/flutter_redux.dart';
 
 import '../../data/_data.dart';
 import '../../states/_states.dart';
@@ -13,14 +13,15 @@ class FavoriteScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: _appBar(context),
-      body: BlocBuilder<StickerCubit, StickerState>(
-        buildWhen: (p, c) => p.favorite != c.favorite,
-        builder: (context, state) {
+      body: StoreConnector<StickerState, List<Sticker>>(
+        distinct: true,
+        converter: (store) => store.state.favorite,
+        builder: (context, favoriteItems) {
           return EmptyWrapper(
             type: EmptyWrapperType.favorite,
             title: "Empty favorite",
-            isEmpty: state.favorite.isEmpty,
-            child: _favoriteListView(context, state.favorite),
+            isEmpty: favoriteItems.isEmpty,
+            child: _favoriteListView(context, favoriteItems),
           );
         },
       ),
@@ -62,8 +63,8 @@ class FavoriteScreen extends StatelessWidget {
             ),
             trailing: IconButton(
               icon: const Icon(AppIcon.heart, color: Colors.redAccent),
-              onPressed: () =>
-                  context.read<StickerCubit>().onAddRemoveFavoriteTap(sticker.id),
+              onPressed: () => StoreProvider.of<StickerState>(context)
+                  .dispatch(FavoriteToggledAction(sticker.id)),
             ),
           ),
         );

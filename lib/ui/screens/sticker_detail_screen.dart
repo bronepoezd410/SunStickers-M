@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_redux/flutter_redux.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
@@ -15,16 +15,17 @@ class StickerDetail extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<StickerCubit, StickerState>(
-      builder: (context, state) {
-        final sticker = state.getStickerById(stickerId);
+    return StoreConnector<StickerState, Sticker>(
+      converter: (store) => store.state.getStickerById(stickerId),
+      builder: (context, sticker) {
         return Scaffold(
           appBar: _appBar(context),
           body: Center(child: Image.asset(sticker.image, scale: 2)),
           floatingActionButton: FloatingActionButton(
             elevation: 0.0,
             backgroundColor: AppColor.accent,
-            onPressed: () => context.read<StickerCubit>().onAddRemoveFavoriteTap(stickerId),
+            onPressed: () => StoreProvider.of<StickerState>(context)
+                .dispatch(FavoriteToggledAction(stickerId)),
             child: sticker.favorite
                 ? const Icon(AppIcon.heart)
                 : const Icon(AppIcon.outlinedHeart),
@@ -114,10 +115,10 @@ class StickerDetail extends StatelessWidget {
                               ?.copyWith(color: AppColor.accent),
                         ),
                         CounterButton(
-                          onIncrementTap: () => context
-                              .read<StickerCubit>().onIncreaseQuantityTap(stickerId),
-                          onDecrementTap: () => context
-                              .read<StickerCubit>().onDecreaseQuantityTap(stickerId),
+                          onIncrementTap: () => StoreProvider.of<StickerState>(context)
+                              .dispatch(QuantityIncreasedAction(stickerId)),
+                          onDecrementTap: () => StoreProvider.of<StickerState>(context)
+                              .dispatch(QuantityDecreasedAction(stickerId)),
                           label: Text(
                             sticker.quantity.toString(),
                             style: Theme.of(context).textTheme.displayLarge,
@@ -142,8 +143,8 @@ class StickerDetail extends StatelessWidget {
                       child: Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 30),
                         child: ElevatedButton(
-                          onPressed: () =>
-                              context.read<StickerCubit>().onAddToCartTap(stickerId),
+                          onPressed: () => StoreProvider.of<StickerState>(context)
+                              .dispatch(AddedToCartAction(stickerId)),
                           child: const Text("Add to cart"),
                         ),
                       ),
