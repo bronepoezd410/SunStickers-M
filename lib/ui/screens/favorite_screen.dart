@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
+import 'package:flutter_mobx/flutter_mobx.dart';
+import 'package:provider/provider.dart';
 
 import '../../data/_data.dart';
 import '../../states/_states.dart';
@@ -7,21 +8,23 @@ import '../../ui_kit/_ui_kit.dart';
 import '../_ui.dart';
 
 class FavoriteScreen extends StatelessWidget {
-  FavoriteScreen({super.key});
-
-  final StickerState state = Get.find<StickerState>();
+  const FavoriteScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final store = context.read<StickerStore>();
     return Scaffold(
       appBar: _appBar(context),
-      body: Obx(
-        () => EmptyWrapper(
-          type: EmptyWrapperType.favorite,
-          title: "Empty favorite",
-          isEmpty: state.favorite.isEmpty,
-          child: _favoriteListView(context),
-        ),
+      body: Observer(
+        builder: (_) {
+          store.version.value;
+          return EmptyWrapper(
+            type: EmptyWrapperType.favorite,
+            title: "Empty favorite",
+            isEmpty: store.favorite.isEmpty,
+            child: _favoriteListView(context, store),
+          );
+        },
       ),
     );
   }
@@ -35,12 +38,12 @@ class FavoriteScreen extends StatelessWidget {
     );
   }
 
-  Widget _favoriteListView(BuildContext context) {
+  Widget _favoriteListView(BuildContext context, StickerStore store) {
     return ListView.separated(
       padding: const EdgeInsets.all(30),
-      itemCount: state.favorite.length,
+      itemCount: store.favorite.length,
       itemBuilder: (_, index) {
-        final Sticker sticker = state.favorite[index];
+        final Sticker sticker = store.favorite[index];
         return Card(
           color: Theme.of(context).brightness == Brightness.light
               ? Colors.white
@@ -61,7 +64,7 @@ class FavoriteScreen extends StatelessWidget {
             ),
             trailing: IconButton(
               icon: const Icon(AppIcon.heart, color: Colors.redAccent),
-              onPressed: () => state.onAddRemoveFavoriteTap(sticker),
+              onPressed: () => store.onAddRemoveFavoriteTap(sticker),
             ),
           ),
         );

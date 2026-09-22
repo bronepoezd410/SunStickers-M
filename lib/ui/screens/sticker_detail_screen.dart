@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:get/get.dart';
+import 'package:provider/provider.dart';
 
 import '../../data/_data.dart';
 import '../../states/_states.dart';
@@ -9,26 +10,38 @@ import '../../ui_kit/_ui_kit.dart';
 import '../widgets/_widgets.dart';
 
 class StickerDetail extends StatelessWidget {
-  StickerDetail({super.key, required this.sticker});
+  const StickerDetail({super.key, required this.sticker});
 
   final Sticker sticker;
-  final StickerState state = Get.find<StickerState>();
 
   @override
   Widget build(BuildContext context) {
+    final store = context.read<StickerStore>();
     return Scaffold(
       appBar: _appBar(context),
       body: Center(child: Image.asset(sticker.image, scale: 2)),
-      floatingActionButton: _floatingActionButton(),
+      floatingActionButton: Observer(
+        builder: (_) {
+          store.version.value;
+          return FloatingActionButton(
+            elevation: 0.0,
+            backgroundColor: AppColor.accent,
+            onPressed: () => store.onAddRemoveFavoriteTap(sticker),
+            child: sticker.favorite
+                ? const Icon(AppIcon.heart)
+                : const Icon(AppIcon.outlinedHeart),
+          );
+        },
+      ),
       floatingActionButtonLocation: FloatingActionButtonLocation.endDocked,
-      bottomNavigationBar: _bottomAppBar(context),
+      bottomNavigationBar: _bottomAppBar(context, store),
     );
   }
 
   PreferredSizeWidget _appBar(BuildContext context) {
     return AppBar(
       leading: IconButton(
-        onPressed: () => Get.back(),
+        onPressed: () => Navigator.of(context).pop(),
         icon: const Icon(Icons.arrow_back),
       ),
       title: Text(
@@ -43,23 +56,7 @@ class StickerDetail extends StatelessWidget {
     );
   }
 
-  Widget _floatingActionButton() {
-    return Obx(() {
-      // Подписка на обновление избранного
-      state.favorite.length;
-      state.stickers.length;
-      return FloatingActionButton(
-        elevation: 0.0,
-        backgroundColor: AppColor.accent,
-        onPressed: () => state.onAddRemoveFavoriteTap(sticker),
-        child: sticker.favorite
-            ? const Icon(AppIcon.heart)
-            : const Icon(AppIcon.outlinedHeart),
-      );
-    });
-  }
-
-  Widget _bottomAppBar(BuildContext context) {
+  Widget _bottomAppBar(BuildContext context, StickerStore store) {
     return ClipRRect(
       borderRadius: const BorderRadius.only(
         topLeft: Radius.circular(30),
@@ -118,17 +115,19 @@ class StickerDetail extends StatelessWidget {
                               .displayLarge
                               ?.copyWith(color: AppColor.accent),
                         ),
-                        Obx(() {
-                          state.stickers.length;
-                          return CounterButton(
-                            onIncrementTap: () => state.onIncreaseQuantityTap(sticker),
-                            onDecrementTap: () => state.onDecreaseQuantityTap(sticker),
-                            label: Text(
-                              sticker.quantity.toString(),
-                              style: Theme.of(context).textTheme.displayLarge,
-                            ),
-                          );
-                        }),
+                        Observer(
+                          builder: (_) {
+                            store.version.value;
+                            return CounterButton(
+                              onIncrementTap: () => store.onIncreaseQuantityTap(sticker),
+                              onDecrementTap: () => store.onDecreaseQuantityTap(sticker),
+                              label: Text(
+                                sticker.quantity.toString(),
+                                style: Theme.of(context).textTheme.displayLarge,
+                              ),
+                            );
+                          },
+                        ),
                       ],
                     ),
                     const SizedBox(height: 15),
@@ -148,7 +147,7 @@ class StickerDetail extends StatelessWidget {
                       child: Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 30),
                         child: ElevatedButton(
-                          onPressed: () => state.onAddToCartTap(sticker),
+                          onPressed: () => store.onAddToCartTap(sticker),
                           child: const Text("Add to cart"),
                         ),
                       ),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
+import 'package:flutter_mobx/flutter_mobx.dart';
+import 'package:provider/provider.dart';
 
 import '../../states/_states.dart';
 import '../../ui_kit/_ui_kit.dart';
@@ -9,7 +10,7 @@ class ProfileScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final state = Get.find<StickerState>();
+    final store = context.read<StickerStore>();
     return Scaffold(
       body: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -23,14 +24,14 @@ class ProfileScreen extends StatelessWidget {
             style: Theme.of(context).textTheme.displayLarge,
           ),
           const SizedBox(height: 20),
-          Obx(
-            () => SwitchListTile(
+          Observer(
+            builder: (_) => SwitchListTile(
               title: Text(
-                state.light.value ? 'Light theme' : 'Dark theme',
+                store.light.value ? 'Light theme' : 'Dark theme',
                 style: Theme.of(context).textTheme.headlineMedium,
               ),
-              value: state.light.value,
-              onChanged: (_) => state.toggleTheme(),
+              value: store.light.value,
+              onChanged: (_) => store.toggleTheme(),
             ),
           ),
         ],
