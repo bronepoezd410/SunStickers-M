@@ -1,22 +1,27 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 import '../../data/_data.dart';
+import '../../states/_states.dart';
 import '../../ui_kit/_ui_kit.dart';
 import '../_ui.dart';
 
 class FavoriteScreen extends StatelessWidget {
   FavoriteScreen({super.key});
-  var favoriteItems = AppData.favoriteItems;
+
+  final StickerState state = Get.find<StickerState>();
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: _appBar(context),
-      body: EmptyWrapper(
-        type: EmptyWrapperType.favorite,
-        title: "Empty favorite",
-        isEmpty: favoriteItems.isEmpty,
-        child: _favoriteListView(context),
+      body: Obx(
+        () => EmptyWrapper(
+          type: EmptyWrapperType.favorite,
+          title: "Empty favorite",
+          isEmpty: state.favorite.isEmpty,
+          child: _favoriteListView(context),
+        ),
       ),
     );
   }
@@ -33,11 +38,13 @@ class FavoriteScreen extends StatelessWidget {
   Widget _favoriteListView(BuildContext context) {
     return ListView.separated(
       padding: const EdgeInsets.all(30),
-      itemCount: favoriteItems.length,
+      itemCount: state.favorite.length,
       itemBuilder: (_, index) {
-        Sticker sticker = favoriteItems[index];
+        final Sticker sticker = state.favorite[index];
         return Card(
-          color: Theme.of(context).brightness == Brightness.light ? Colors.white : AppColor.dark,
+          color: Theme.of(context).brightness == Brightness.light
+              ? Colors.white
+              : AppColor.dark,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(15.0),
           ),
@@ -52,7 +59,10 @@ class FavoriteScreen extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
               style: Theme.of(context).textTheme.bodyLarge,
             ),
-            trailing: const Icon(AppIcon.heart, color: Colors.redAccent),
+            trailing: IconButton(
+              icon: const Icon(AppIcon.heart, color: Colors.redAccent),
+              onPressed: () => state.onAddRemoveFavoriteTap(sticker),
+            ),
           ),
         );
       },

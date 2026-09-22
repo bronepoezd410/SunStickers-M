@@ -1,92 +1,107 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 import '../data/_data.dart';
-import '../ui/_ui.dart';
 
-class StickerState {
-  StickerState._();
-  static final _instance = StickerState._();
-  factory StickerState() => _instance;
+class StickerState extends GetxController {
+  // Переменные
+  final categories = <StickerCategory>[].obs;
+  final stickers = <Sticker>[].obs;
+  final stickersByCategory = <Sticker>[].obs;
+  final cart = <Sticker>[].obs;
+  final favorite = <Sticker>[].obs;
+  final light = true.obs;
 
-  //Переменные
-  List<StickerCategory> categories = AppData.categories;
-  List<Sticker> stickers = AppData.stickers;
-  List<Sticker> stickersByCategory = AppData.stickers;
-  List<Sticker> cart = <Sticker>[];
-  List<Sticker> favorite = <Sticker>[];
-  bool light = true;
+  static const double taxes = 5.0;
 
-  //Действия
+  @override
+  void onInit() {
+    super.onInit();
+    categories.assignAll(AppData.categories);
+    stickers.assignAll(AppData.stickers);
+    stickersByCategory.assignAll(AppData.stickers);
+  }
+
+  // Действия
   Future<void> onCategoryTap(StickerCategory category) async {
-    categories.map((e) {
-      if (e.type == category.type) {
-        e.isSelected = true;
-      } else {
-        e.isSelected = false;
-      }
-    }).toList();
-    if (category.type == StickerType.all) {
-      stickersByCategory = stickers;
-    } else {
-      stickersByCategory = stickers.where((e) => e.type == category.type).toList();
+    for (final e in categories) {
+      e.isSelected = e.type == category.type;
     }
+    if (category.type == StickerType.all) {
+      stickersByCategory.assignAll(stickers);
+    } else {
+      stickersByCategory.assignAll(
+        stickers.where((e) => e.type == category.type).toList(),
+      );
+    }
+    categories.refresh();
   }
 
   Future<void> onIncreaseQuantityTap(Sticker sticker) async {
     sticker.quantity++;
+    stickers.refresh();
+    stickersByCategory.refresh();
+    cart.refresh();
   }
 
   Future<void> onDecreaseQuantityTap(Sticker sticker) async {
     if (sticker.quantity == 1) return;
     sticker.quantity--;
+    stickers.refresh();
+    stickersByCategory.refresh();
+    cart.refresh();
   }
 
   Future<void> onAddToCartTap(Sticker sticker) async {
     sticker.cart = true;
-    cart = stickers.where((e) => e.cart).toList();
+    cart.assignAll(stickers.where((e) => e.cart).toList());
+    stickers.refresh();
   }
 
   Future<void> onRemoveFromCartTap(Sticker sticker) async {
     sticker.cart = false;
     sticker.quantity = 1;
-    cart = stickers.where((e) => e.cart).toList();
+    cart.assignAll(stickers.where((e) => e.cart).toList());
+    stickers.refresh();
   }
 
   Future<void> onCheckOutTap() async {
-    for (var e in cart) {
+    for (final e in cart) {
       e.cart = false;
       e.quantity = 1;
     }
-    cart = stickers.where((e) => e.cart).toList();
+    cart.assignAll(stickers.where((e) => e.cart).toList());
+    stickers.refresh();
   }
 
   Future<void> onAddRemoveFavoriteTap(Sticker sticker) async {
     sticker.favorite = !sticker.favorite;
-    favorite = stickers.where((e) => e.favorite).toList();
+    favorite.assignAll(stickers.where((e) => e.favorite).toList());
+    stickers.refresh();
+    stickersByCategory.refresh();
   }
 
   void toggleTheme() {
-    light = !light;
+    light.value = !light.value;
+    Get.changeThemeMode(light.value ? ThemeMode.light : ThemeMode.dark);
   }
 
-  //Вспомогательные  методы
+  // Вспомогательные методы
   String stickerPrice(Sticker sticker) {
-    return (sticker.quantity * sticker.price).toString();
+    return (sticker.quantity * sticker.price).toStringAsFixed(0);
   }
 
   double get subtotal {
     double amount = 0.0;
-    for (var e in cart) {
+    for (final e in cart) {
       amount = amount + e.price * e.quantity;
     }
     return amount;
   }
 
-  //BLoC, Cubit, GetX, MobX, Provider, Riverpod, Redux
+  double get total => subtotal + taxes;
 
   // 14 шагов логики
-  //
-  //
   // 1.  Подсветка выбранной категории
   // 2.  Продукты по категории
   // 3.  Детали: отображение продукта

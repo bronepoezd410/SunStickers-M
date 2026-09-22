@@ -339,10 +339,6 @@ class AppData {
     StickerCategory(type: StickerType.other, isSelected: false),
   ];
 
-  static List<Sticker> cartItems = [stickers[0], stickers[1], stickers[2]];
-  static List<Sticker> favoriteItems = [
-    stickers[0]..favorite = true,
-    stickers[1]..favorite = true,
-    stickers[2]..favorite = true
-  ];
+  static List<Sticker> cartItems = <Sticker>[];
+  static List<Sticker> favoriteItems = <Sticker>[];
 }
