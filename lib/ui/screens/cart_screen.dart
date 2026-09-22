@@ -1,31 +1,30 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:provider/provider.dart';
 
 import '../../data/_data.dart';
 import '../../states/_states.dart';
 import '../../ui_kit/_ui_kit.dart';
 import '../_ui.dart';
 
-class CartScreen extends StatelessWidget {
+class CartScreen extends ConsumerWidget {
   const CartScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return Consumer<StickerProvider>(
-      builder: (context, provider, _) {
-        final cartItems = provider.cart;
-        return Scaffold(
-          appBar: _appBar(context),
-          body: EmptyWrapper(
-            title: "Empty cart",
-            isEmpty: cartItems.isEmpty,
-            child: _cartListView(context, provider, cartItems),
-          ),
-          bottomNavigationBar:
-              cartItems.isEmpty ? const SizedBox.shrink() : _bottomAppBar(context, provider),
-        );
-      },
+  Widget build(BuildContext context, WidgetRef ref) {
+    final state = ref.watch(stickerProvider);
+    final notifier = ref.read(stickerProvider.notifier);
+    final cartItems = state.cart;
+
+    return Scaffold(
+      appBar: _appBar(context),
+      body: EmptyWrapper(
+        title: "Empty cart",
+        isEmpty: cartItems.isEmpty,
+        child: _cartListView(context, state, notifier, cartItems),
+      ),
+      bottomNavigationBar:
+          cartItems.isEmpty ? const SizedBox.shrink() : _bottomAppBar(context, state, notifier),
     );
   }
 
@@ -40,7 +39,8 @@ class CartScreen extends StatelessWidget {
 
   Widget _cartListView(
     BuildContext context,
-    StickerProvider provider,
+    StickerState state,
+    StickerNotifier notifier,
     List<Sticker> cartItems,
   ) {
     return ListView.separated(
@@ -50,7 +50,7 @@ class CartScreen extends StatelessWidget {
         final sticker = cartItems[index];
         return Dismissible(
           direction: DismissDirection.endToStart,
-          onDismissed: (_) => provider.onRemoveFromCartTap(sticker.id),
+          onDismissed: (_) => notifier.onRemoveFromCartTap(sticker.id),
           key: ValueKey('cart_${sticker.id}'),
           background: Row(
             children: [
@@ -100,8 +100,8 @@ class CartScreen extends StatelessWidget {
                 Column(
                   children: [
                     CounterButton(
-                      onIncrementTap: () => provider.onIncreaseQuantityTap(sticker.id),
-                      onDecrementTap: () => provider.onDecreaseQuantityTap(sticker.id),
+                      onIncrementTap: () => notifier.onIncreaseQuantityTap(sticker.id),
+                      onDecrementTap: () => notifier.onDecreaseQuantityTap(sticker.id),
                       size: const Size(24, 24),
                       padding: 0,
                       label: Text(
@@ -110,7 +110,7 @@ class CartScreen extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      "\$${provider.stickerPrice(sticker)}",
+                      "\$${state.stickerPrice(sticker)}",
                       style: AppTextStyle.h2Style.copyWith(color: AppColor.accent),
                     )
                   ],
@@ -126,7 +126,11 @@ class CartScreen extends StatelessWidget {
     );
   }
 
-  Widget _bottomAppBar(BuildContext context, StickerProvider provider) {
+  Widget _bottomAppBar(
+    BuildContext context,
+    StickerState state,
+    StickerNotifier notifier,
+  ) {
     return ClipRRect(
       borderRadius: const BorderRadius.only(
         topLeft: Radius.circular(30),
@@ -154,7 +158,7 @@ class CartScreen extends StatelessWidget {
                             style: Theme.of(context).textTheme.headlineSmall,
                           ),
                           Text(
-                            "\$${provider.subtotal.toStringAsFixed(1)}",
+                            "\$${state.subtotal.toStringAsFixed(1)}",
                             style: Theme.of(context).textTheme.displayMedium,
                           ),
                         ],
@@ -191,7 +195,7 @@ class CartScreen extends StatelessWidget {
                             style: Theme.of(context).textTheme.displayMedium,
                           ),
                           Text(
-                            "\$${provider.total.toStringAsFixed(1)}",
+                            "\$${state.total.toStringAsFixed(1)}",
                             style: AppTextStyle.h2Style.copyWith(
                               color: AppColor.accent,
                             ),
@@ -206,7 +210,7 @@ class CartScreen extends StatelessWidget {
                       child: Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 30),
                         child: ElevatedButton(
-                          onPressed: provider.onCheckOutTap,
+                          onPressed: notifier.onCheckOutTap,
                           child: const Text("Checkout"),
                         ),
                       ),

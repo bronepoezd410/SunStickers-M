@@ -1,25 +1,10 @@
-import 'package:flutter/foundation.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../data/_data.dart';
 import 'sticker_state.dart';
 
-class StickerProvider extends ChangeNotifier {
-  StickerState _state = StickerState.initial();
-
-  StickerState get state => _state;
-
-  List<StickerCategory> get categories => _state.categories;
-  List<Sticker> get stickers => _state.stickers;
-  List<Sticker> get stickersByCategory => _state.stickersByCategory;
-  List<Sticker> get cart => _state.cart;
-  List<Sticker> get favorite => _state.favorite;
-  bool get light => _state.light;
-  double get subtotal => _state.subtotal;
-  double get total => _state.total;
-
-  Sticker getStickerById(int stickerId) => _state.getStickerById(stickerId);
-
-  String stickerPrice(Sticker sticker) => _state.stickerPrice(sticker);
+class StickerNotifier extends StateNotifier<StickerState> {
+  StickerNotifier() : super(StickerState.initial());
 
   List<Sticker> _byCategory(List<Sticker> stickers, List<StickerCategory> categories) {
     final selected = categories.firstWhere(
@@ -33,29 +18,28 @@ class StickerProvider extends ChangeNotifier {
   }
 
   void _setStickers(List<Sticker> stickers, {List<StickerCategory>? categories}) {
-    final nextCategories = categories ?? _state.categories;
-    _state = _state.copyWith(
+    final nextCategories = categories ?? state.categories;
+    state = state.copyWith(
       categories: nextCategories,
       stickers: stickers,
       stickersByCategory: _byCategory(stickers, nextCategories),
       cart: stickers.where((e) => e.cart).toList(),
       favorite: stickers.where((e) => e.favorite).toList(),
     );
-    notifyListeners();
   }
 
   void onCategoryTap(StickerCategory category) {
-    final categories = _state.categories.map((e) {
+    final categories = state.categories.map((e) {
       if (e.type == category.type) {
         return e.copyWith(isSelected: true);
       }
       return e.copyWith(isSelected: false);
     }).toList();
-    _setStickers(_state.stickers, categories: categories);
+    _setStickers(state.stickers, categories: categories);
   }
 
   void onIncreaseQuantityTap(int stickerId) {
-    final stickers = _state.stickers.map((e) {
+    final stickers = state.stickers.map((e) {
       if (e.id == stickerId) {
         return e.copyWith(quantity: e.quantity + 1);
       }
@@ -65,7 +49,7 @@ class StickerProvider extends ChangeNotifier {
   }
 
   void onDecreaseQuantityTap(int stickerId) {
-    final stickers = _state.stickers.map((e) {
+    final stickers = state.stickers.map((e) {
       if (e.id == stickerId) {
         return e.quantity == 1 ? e : e.copyWith(quantity: e.quantity - 1);
       }
@@ -75,7 +59,7 @@ class StickerProvider extends ChangeNotifier {
   }
 
   void onAddToCartTap(int stickerId) {
-    final stickers = _state.stickers.map((e) {
+    final stickers = state.stickers.map((e) {
       if (e.id == stickerId) {
         return e.copyWith(cart: true);
       }
@@ -85,7 +69,7 @@ class StickerProvider extends ChangeNotifier {
   }
 
   void onRemoveFromCartTap(int stickerId) {
-    final stickers = _state.stickers.map((e) {
+    final stickers = state.stickers.map((e) {
       if (e.id == stickerId) {
         return e.copyWith(cart: false, quantity: 1);
       }
@@ -95,8 +79,8 @@ class StickerProvider extends ChangeNotifier {
   }
 
   void onCheckOutTap() {
-    final cartIds = _state.cart.map((e) => e.id).toSet();
-    final stickers = _state.stickers.map((e) {
+    final cartIds = state.cart.map((e) => e.id).toSet();
+    final stickers = state.stickers.map((e) {
       if (cartIds.contains(e.id)) {
         return e.copyWith(cart: false, quantity: 1);
       }
@@ -106,7 +90,7 @@ class StickerProvider extends ChangeNotifier {
   }
 
   void onAddRemoveFavoriteTap(int stickerId) {
-    final stickers = _state.stickers.map((e) {
+    final stickers = state.stickers.map((e) {
       if (e.id == stickerId) {
         return e.copyWith(favorite: !e.favorite);
       }
@@ -116,8 +100,7 @@ class StickerProvider extends ChangeNotifier {
   }
 
   void toggleTheme() {
-    _state = _state.copyWith(light: !_state.light);
-    notifyListeners();
+    state = state.copyWith(light: !state.light);
   }
 
   // 14 шагов логики
@@ -136,3 +119,7 @@ class StickerProvider extends ChangeNotifier {
   // 13. Детали: Добавление/удаление любимые
   // 14. Смена темы
 }
+
+final stickerProvider = StateNotifierProvider<StickerNotifier, StickerState>(
+  (ref) => StickerNotifier(),
+);

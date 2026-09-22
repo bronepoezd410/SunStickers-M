@@ -1,27 +1,26 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../data/_data.dart';
 import '../../states/_states.dart';
 import '../../ui_kit/_ui_kit.dart';
 import '../_ui.dart';
 
-class FavoriteScreen extends StatelessWidget {
+class FavoriteScreen extends ConsumerWidget {
   const FavoriteScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final favorite = ref.watch(stickerProvider.select((s) => s.favorite));
+    final notifier = ref.read(stickerProvider.notifier);
+
     return Scaffold(
       appBar: _appBar(context),
-      body: Consumer<StickerProvider>(
-        builder: (context, provider, _) {
-          return EmptyWrapper(
-            type: EmptyWrapperType.favorite,
-            title: "Empty favorite",
-            isEmpty: provider.favorite.isEmpty,
-            child: _favoriteListView(context, provider),
-          );
-        },
+      body: EmptyWrapper(
+        type: EmptyWrapperType.favorite,
+        title: "Empty favorite",
+        isEmpty: favorite.isEmpty,
+        child: _favoriteListView(context, favorite, notifier),
       ),
     );
   }
@@ -35,12 +34,16 @@ class FavoriteScreen extends StatelessWidget {
     );
   }
 
-  Widget _favoriteListView(BuildContext context, StickerProvider provider) {
+  Widget _favoriteListView(
+    BuildContext context,
+    List<Sticker> favoriteItems,
+    StickerNotifier notifier,
+  ) {
     return ListView.separated(
       padding: const EdgeInsets.all(30),
-      itemCount: provider.favorite.length,
+      itemCount: favoriteItems.length,
       itemBuilder: (_, index) {
-        final Sticker sticker = provider.favorite[index];
+        final Sticker sticker = favoriteItems[index];
         return Card(
           color: Theme.of(context).brightness == Brightness.light
               ? Colors.white
@@ -61,7 +64,7 @@ class FavoriteScreen extends StatelessWidget {
             ),
             trailing: IconButton(
               icon: const Icon(AppIcon.heart, color: Colors.redAccent),
-              onPressed: () => provider.onAddRemoveFavoriteTap(sticker.id),
+              onPressed: () => notifier.onAddRemoveFavoriteTap(sticker.id),
             ),
           ),
         );

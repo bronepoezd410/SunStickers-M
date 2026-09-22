@@ -1,14 +1,16 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../states/_states.dart';
 import '../../ui_kit/_ui_kit.dart';
 
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({Key? key}) : super(key: key);
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final light = ref.watch(stickerProvider.select((s) => s.light));
+
     return Scaffold(
       body: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -22,17 +24,13 @@ class ProfileScreen extends StatelessWidget {
             style: Theme.of(context).textTheme.displayLarge,
           ),
           const SizedBox(height: 20),
-          Consumer<StickerProvider>(
-            builder: (context, provider, _) {
-              return SwitchListTile(
-                title: Text(
-                  provider.light ? 'Light theme' : 'Dark theme',
-                  style: Theme.of(context).textTheme.headlineMedium,
-                ),
-                value: provider.light,
-                onChanged: (_) => provider.toggleTheme(),
-              );
-            },
+          SwitchListTile(
+            title: Text(
+              light ? 'Light theme' : 'Dark theme',
+              style: Theme.of(context).textTheme.headlineMedium,
+            ),
+            value: light,
+            onChanged: (_) => ref.read(stickerProvider.notifier).toggleTheme(),
           ),
         ],
       ),

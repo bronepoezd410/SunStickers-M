@@ -1,19 +1,23 @@
 import 'package:badges/badges.dart';
 import 'package:flutter/material.dart' hide Badge;
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:provider/provider.dart';
 
+import '../../data/_data.dart';
 import '../../states/_states.dart';
 import '../../ui_kit/_ui_kit.dart';
 import '../_ui.dart';
 
-class StickerList extends StatelessWidget {
+class StickerList extends ConsumerWidget {
   const StickerList({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final stickersByCategory = ref.watch(stickerProvider.select((s) => s.stickersByCategory));
+    final categories = ref.watch(stickerProvider.select((s) => s.categories));
+
     return Scaffold(
-      appBar: _appBar(context),
+      appBar: _appBar(context, ref),
       body: Padding(
         padding: const EdgeInsets.all(20),
         child: SingleChildScrollView(
@@ -33,12 +37,8 @@ class StickerList extends StatelessWidget {
                 "Available for you",
                 style: Theme.of(context).textTheme.displaySmall,
               ),
-              _categories(context),
-              Consumer<StickerProvider>(
-                builder: (context, provider, _) {
-                  return StickerListView(stickers: provider.stickersByCategory);
-                },
-              ),
+              _categories(context, ref, categories),
+              StickerListView(stickers: stickersByCategory),
               Padding(
                 padding: const EdgeInsets.only(top: 25, bottom: 5),
                 child: Row(
@@ -61,13 +61,9 @@ class StickerList extends StatelessWidget {
                   ],
                 ),
               ),
-              Consumer<StickerProvider>(
-                builder: (context, provider, _) {
-                  return StickerListView(
-                    stickers: provider.stickersByCategory,
-                    isReversed: true,
-                  );
-                },
+              StickerListView(
+                stickers: stickersByCategory,
+                isReversed: true,
               ),
             ],
           ),
@@ -76,11 +72,11 @@ class StickerList extends StatelessWidget {
     );
   }
 
-  PreferredSizeWidget _appBar(BuildContext context) {
+  PreferredSizeWidget _appBar(BuildContext context, WidgetRef ref) {
     return AppBar(
       leading: IconButton(
         icon: const FaIcon(FontAwesomeIcons.dice),
-        onPressed: () => context.read<StickerProvider>().toggleTheme(),
+        onPressed: () => ref.read(stickerProvider.notifier).toggleTheme(),
       ),
       title: Row(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -121,41 +117,41 @@ class StickerList extends StatelessWidget {
     );
   }
 
-  Widget _categories(BuildContext context) {
+  Widget _categories(
+    BuildContext context,
+    WidgetRef ref,
+    List<StickerCategory> categories,
+  ) {
     return Padding(
       padding: const EdgeInsets.only(top: 8.0),
       child: SizedBox(
         height: 40,
-        child: Consumer<StickerProvider>(
-          builder: (context, provider, _) {
-            return ListView.separated(
-              scrollDirection: Axis.horizontal,
-              itemBuilder: (_, index) {
-                final category = provider.categories[index];
-                return GestureDetector(
-                  onTap: () => provider.onCategoryTap(category),
-                  child: Container(
-                    width: 100,
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color: category.isSelected ? AppColor.accent : Colors.transparent,
-                      borderRadius: const BorderRadius.all(
-                        Radius.circular(15),
-                      ),
-                    ),
-                    child: Text(
-                      category.type.name.firstCapital,
-                      style: Theme.of(context).textTheme.headlineMedium,
-                    ),
+        child: ListView.separated(
+          scrollDirection: Axis.horizontal,
+          itemBuilder: (_, index) {
+            final category = categories[index];
+            return GestureDetector(
+              onTap: () => ref.read(stickerProvider.notifier).onCategoryTap(category),
+              child: Container(
+                width: 100,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: category.isSelected ? AppColor.accent : Colors.transparent,
+                  borderRadius: const BorderRadius.all(
+                    Radius.circular(15),
                   ),
-                );
-              },
-              separatorBuilder: (_, __) => Container(
-                width: 15,
+                ),
+                child: Text(
+                  category.type.name.firstCapital,
+                  style: Theme.of(context).textTheme.headlineMedium,
+                ),
               ),
-              itemCount: provider.categories.length,
             );
           },
+          separatorBuilder: (_, __) => Container(
+            width: 15,
+          ),
+          itemCount: categories.length,
         ),
       ),
     );

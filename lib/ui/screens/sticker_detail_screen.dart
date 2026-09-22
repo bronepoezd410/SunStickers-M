@@ -1,38 +1,38 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:provider/provider.dart';
 
 import '../../data/_data.dart';
 import '../../states/_states.dart';
 import '../../ui_kit/_ui_kit.dart';
 import '../widgets/_widgets.dart';
 
-class StickerDetail extends StatelessWidget {
+class StickerDetail extends ConsumerWidget {
   const StickerDetail({super.key, required this.stickerId});
 
   final int stickerId;
 
   @override
-  Widget build(BuildContext context) {
-    return Consumer<StickerProvider>(
-      builder: (context, provider, _) {
-        final sticker = provider.getStickerById(stickerId);
-        return Scaffold(
-          appBar: _appBar(context),
-          body: Center(child: Image.asset(sticker.image, scale: 2)),
-          floatingActionButton: FloatingActionButton(
-            elevation: 0.0,
-            backgroundColor: AppColor.accent,
-            onPressed: () => provider.onAddRemoveFavoriteTap(stickerId),
-            child: sticker.favorite
-                ? const Icon(AppIcon.heart)
-                : const Icon(AppIcon.outlinedHeart),
-          ),
-          floatingActionButtonLocation: FloatingActionButtonLocation.endDocked,
-          bottomNavigationBar: _bottomAppBar(context, provider, sticker),
-        );
-      },
+  Widget build(BuildContext context, WidgetRef ref) {
+    final sticker = ref.watch(
+      stickerProvider.select((s) => s.getStickerById(stickerId)),
+    );
+    final notifier = ref.read(stickerProvider.notifier);
+
+    return Scaffold(
+      appBar: _appBar(context),
+      body: Center(child: Image.asset(sticker.image, scale: 2)),
+      floatingActionButton: FloatingActionButton(
+        elevation: 0.0,
+        backgroundColor: AppColor.accent,
+        onPressed: () => notifier.onAddRemoveFavoriteTap(stickerId),
+        child: sticker.favorite
+            ? const Icon(AppIcon.heart)
+            : const Icon(AppIcon.outlinedHeart),
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.endDocked,
+      bottomNavigationBar: _bottomAppBar(context, notifier, sticker),
     );
   }
 
@@ -56,7 +56,7 @@ class StickerDetail extends StatelessWidget {
 
   Widget _bottomAppBar(
     BuildContext context,
-    StickerProvider provider,
+    StickerNotifier notifier,
     Sticker sticker,
   ) {
     return ClipRRect(
@@ -118,8 +118,8 @@ class StickerDetail extends StatelessWidget {
                               ?.copyWith(color: AppColor.accent),
                         ),
                         CounterButton(
-                          onIncrementTap: () => provider.onIncreaseQuantityTap(stickerId),
-                          onDecrementTap: () => provider.onDecreaseQuantityTap(stickerId),
+                          onIncrementTap: () => notifier.onIncreaseQuantityTap(stickerId),
+                          onDecrementTap: () => notifier.onDecreaseQuantityTap(stickerId),
                           label: Text(
                             sticker.quantity.toString(),
                             style: Theme.of(context).textTheme.displayLarge,
@@ -144,7 +144,7 @@ class StickerDetail extends StatelessWidget {
                       child: Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 30),
                         child: ElevatedButton(
-                          onPressed: () => provider.onAddToCartTap(stickerId),
+                          onPressed: () => notifier.onAddToCartTap(stickerId),
                           child: const Text("Add to cart"),
                         ),
                       ),
